@@ -14,6 +14,7 @@ fixme
 hotfix
 qtest
 vscode
+clangd
 sanitizer
 unix
 linux

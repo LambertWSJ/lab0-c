@@ -7,6 +7,11 @@ qtest
 core*
 .cmd_history
 
+# clangd files
+.cache
+.clangd
+compile_commands.json
+
 # ctags files
 TAGS
 .TAGS
