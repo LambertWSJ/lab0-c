@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "list_sort.h"
 #include "queue.h"
 
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
@@ -13,23 +14,24 @@
 #define list_for_each_safe_reverse(node, safe, head)         \
     for (node = head->prev, safe = node->prev; node != head; \
          node = safe, safe = node->prev)
-#define MSB(val) ((val) &0x80000000)
 
-static int dec_cmp(struct list_head *l1, struct list_head *l2)
+static int asc_cmp(void *priv,
+                   const struct list_head *l1,
+                   const struct list_head *l2)
 {
-    char *l1_val = list_first_entry(l1, element_t, list)->value;
-    char *l2_val = list_first_entry(l2, element_t, list)->value;
-    return !MSB(strcmp(l1_val, l2_val));
+    char *s1 = list_entry(l1, element_t, list)->value;
+    char *s2 = list_entry(l2, element_t, list)->value;
+    return strcmp(s1, s2);
 }
 
-static int asc_cmp(struct list_head *l1, struct list_head *l2)
+static int dec_cmp(void *priv,
+                   const struct list_head *l1,
+                   const struct list_head *l2)
 {
-    char *l1_val = list_first_entry(l1, element_t, list)->value;
-    char *l2_val = list_first_entry(l2, element_t, list)->value;
-    return !!MSB(strcmp(l1_val, l2_val));
+    return asc_cmp(priv, l2, l1);
 }
 
-static int (*sort_cmp[])(struct list_head *l1, struct list_head *l2) = {
+static list_cmp_func_t sort_cmp[] = {
     [true] = dec_cmp,
     [false] = asc_cmp,
 };
@@ -74,14 +76,14 @@ static void merge_two_lists(struct list_head *l1,
                             bool descend)
 {
     struct list_head *next, **node;
-    int (*cmp)(struct list_head * l1, struct list_head * l2) =
-        sort_cmp[descend];
+    list_cmp_func_t cmp = sort_cmp[descend];
 
     for (node = NULL; !list_empty(l1) && !list_empty(l2); *node = next) {
-        node = cmp(l1, l2) ? &l1->next : &l2->next;
+        node = cmp(NULL, l1->next, l2->next) <= 0 ? &l1->next : &l2->next;
         next = (*node)->next;
         list_move_tail(*node, sorted);
     }
+
     list_splice_tail_init(list_empty(l1) ? l2 : l1, sorted);
 }
 
@@ -302,6 +304,7 @@ int q_merge(struct list_head *head, bool descend)
 {
     if (!head)
         return 0;
+
     LIST_HEAD(sorted);
     queue_contex_t *cur = NULL;
     queue_contex_t *last = list_last_entry(head, queue_contex_t, chain);
@@ -315,8 +318,18 @@ int q_merge(struct list_head *head, bool descend)
         list_splice_init(last->q, &sorted);
         last = list_entry(last->chain.prev, queue_contex_t, chain);
     }
+
     q_sort(&sorted, descend);
     int size = q_size(&sorted);
     list_splice_init(&sorted, list_first_entry(head, queue_contex_t, chain)->q);
     return size;
+}
+
+void q_ksort(struct list_head *head, bool descend)
+{
+    if (!head)
+        return;
+
+    list_cmp_func_t cmp = sort_cmp[descend];
+    list_sort(NULL, head, cmp);
 }
