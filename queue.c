@@ -10,10 +10,22 @@
  * following line.
  *   cppcheck-suppress nullPointer
  */
+typedef void (*sort_f)(struct list_head *, bool descend);
+typedef void (*queue_op)(struct list_head *head);
+extern sort_f m_sort;
+extern queue_op reverse_op;
 
 #define list_for_each_safe_reverse(node, safe, head)         \
     for (node = head->prev, safe = node->prev; node != head; \
          node = safe, safe = node->prev)
+
+static void list_swap(struct list_head *e1, struct list_head *e2)
+{
+    struct list_head *prev = e2->prev;
+    list_move(e2, e1);
+    if (prev != e1)
+        list_move(e1, prev);
+}
 
 static int asc_cmp(void *priv,
                    const struct list_head *l1,
@@ -192,6 +204,16 @@ void q_swap(struct list_head *head)
     }
 }
 
+void q_swap2(struct list_head *head)
+{
+    struct list_head *node;
+    list_for_each (node, head) {
+        if (node->next == head)
+            break;
+        list_swap(node->next, node);
+    }
+}
+
 /* Reverse elements in queue */
 void q_reverse(struct list_head *head)
 {
@@ -201,12 +223,44 @@ void q_reverse(struct list_head *head)
     }
 }
 
+void q_reverse_bidir(struct list_head *head)
+{
+    struct list_head *cur, *safe;
+    struct list_head *last = head->prev, *last_safe;
+
+    list_for_each_safe (cur, safe, head) {
+        last_safe = last->prev;
+        if (cur->next == last) {
+            list_swap(cur, last);
+            break;
+        } else if (cur->next == last->next)
+            break;
+
+        list_swap(cur, last);
+        last = last_safe;
+    }
+}
+
+static void do_recur_reverse(struct list_head *node, struct list_head *head)
+{
+    if (node == head)
+        return;
+
+    struct list_head *safe = node->next;
+    list_move(node, head);
+    do_recur_reverse(safe, head);
+}
+
+void q_reverse_recur(struct list_head *head)
+{
+    do_recur_reverse(head->next, head);
+}
+
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
 {
-    if (!head || k <= 1) {
+    if (!head || k <= 1)
         return;
-    }
 
     struct list_head *node, *safe, *anchor;
     LIST_HEAD(rev_head);
@@ -217,7 +271,7 @@ void q_reverseK(struct list_head *head, int k)
         i++;
         if (i == k) {
             list_cut_position(&rev_head, anchor, node);
-            q_reverse(&rev_head);
+            reverse_op(&rev_head);
             list_splice_init(&rev_head, anchor);
             anchor = safe->prev;
             i = 0;
@@ -319,7 +373,7 @@ int q_merge(struct list_head *head, bool descend)
         last = list_entry(last->chain.prev, queue_contex_t, chain);
     }
 
-    q_sort(&sorted, descend);
+    m_sort(&sorted, descend);
     int size = q_size(&sorted);
     list_splice_init(&sorted, list_first_entry(head, queue_contex_t, chain)->q);
     return size;
@@ -332,4 +386,59 @@ void q_ksort(struct list_head *head, bool descend)
 
     list_cmp_func_t cmp = sort_cmp[descend];
     list_sort(NULL, head, cmp);
+}
+
+void q_shuffle(struct list_head *head)
+{
+    if (list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *node;
+    LIST_HEAD(list);
+
+    for (size_t len = q_size(head); len; len--) {
+        int id = rand() % len;
+        int i = 0;
+        list_for_each (node, head) {
+            if (i == id) {
+                list_move_tail(node, &list);
+                break;
+            }
+            i++;
+        }
+    }
+
+    list_splice_tail(&list, head);
+}
+
+void q_shuffle_remain(struct list_head *head)
+{
+    if (list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *cur, *prev;
+    struct list_head *chosen;
+    LIST_HEAD(list);
+    size_t len = q_size(head);
+
+
+    for (cur = head->prev; len && cur->prev != head; len--) {
+        prev = cur->prev;
+        int id = rand() % len;
+        int i = 0;
+
+        list_for_each (chosen, head) {
+            if (i == id)
+                break;
+            i++;
+        }
+
+        if (chosen == head || chosen == cur)
+            continue;
+        list_swap(cur, chosen);
+
+        if (cur->next == chosen)
+            continue;
+        cur = prev;
+    }
 }
