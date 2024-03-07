@@ -233,7 +233,7 @@ void q_reverse_bidir(struct list_head *head)
         if (cur->next == last) {
             list_swap(cur, last);
             break;
-        } else if (cur->next == last->next)
+        } else if (cur == last)
             break;
 
         list_swap(cur, last);
