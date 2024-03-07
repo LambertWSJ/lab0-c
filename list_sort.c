@@ -16,27 +16,20 @@ merge(void *priv, list_cmp_func_t cmp, struct list_head *a, struct list_head *b)
 {
     /* cppcheck-suppress unassignedVariable */
     struct list_head *head, **tail = &head;
+    struct list_head *node;
 
     for (;;) {
         /* if equal, take 'a' -- important for sort stability */
-        if (cmp(priv, a, b) <= 0) {
-            *tail = a;
-            tail = &a->next;
-            a = a->next;
-            if (!a) {
-                *tail = b;
-                break;
-            }
-        } else {
-            *tail = b;
-            tail = &b->next;
-            b = b->next;
-            if (!b) {
-                *tail = a;
-                break;
-            }
+        struct list_head **indir = cmp(priv, a, b) <= 0 ? &a : &b;
+        node = *indir;
+        *tail = node;
+        tail = &node->next;
+        *indir = node->next;
+        if (!node->next) {
+            break;
         }
     }
+    *tail = (struct list_head *) ((uintptr_t) a | (uintptr_t) b);
     return head;
 }
 
@@ -55,31 +48,25 @@ __attribute__((nonnull(2, 3, 4, 5))) static void merge_final(
     struct list_head *b)
 {
     struct list_head *tail = head;
+    struct list_head *node;
     u8 count = 0;
 
     for (;;) {
         /* if equal, take 'a' -- important for sort stability */
-        if (cmp(priv, a, b) <= 0) {
-            tail->next = a;
-            a->prev = tail;
-            tail = a;
-            a = a->next;
-            if (!a)
-                break;
-        } else {
-            tail->next = b;
-            b->prev = tail;
-            tail = b;
-            b = b->next;
-            if (!b) {
-                b = a;
-                break;
-            }
-        }
+        struct list_head **indir = cmp(priv, a, b) <= 0 ? &a : &b;
+        node = *indir;
+        tail->next = node;
+        node->prev = tail;
+        tail = node;
+        *indir = node->next;
+        if (!node->next)
+            break;
     }
 
+    node = (struct list_head *) ((uintptr_t) a | (uintptr_t) b);
+
     /* Finish linking remainder of list b on to tail */
-    tail->next = b;
+    tail->next = node;
     do {
         /*
          * If the merge is highly unbalanced (e.g. the input is
@@ -89,11 +76,11 @@ __attribute__((nonnull(2, 3, 4, 5))) static void merge_final(
          * routine can invoke cond_resched() periodically.
          */
         if (unlikely(!++count))
-            cmp(priv, b, b);
-        b->prev = tail;
-        tail = b;
-        b = b->next;
-    } while (b);
+            cmp(priv, node, node);
+        node->prev = tail;
+        tail = node;
+        node = node->next;
+    } while (node);
 
     /* And the final links to make a circular doubly-linked list */
     tail->next = head;
