@@ -6,6 +6,17 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 typedef uint8_t u8;
 
+#ifdef DUMP_SORT
+#include "queue.h"
+element_t *node_val(struct list_head *node)
+{
+    if (!node) {
+        return NULL;
+    }
+    return list_entry(node, element_t, list);
+}
+#endif /* DUMP_SORT */
+
 /*
  * Returns a list organized in an intermediate format suited
  * to chaining of merge() calls: null-terminated, no reserved or

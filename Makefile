@@ -4,6 +4,7 @@ CFLAGS = -O1 -g -Wall -Werror -Idudect -I.
 # Emit a warning should any variable-length array be found within the code.
 CFLAGS += -Wvla
 
+DUMP_SORT = 0
 GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
 all: $(GIT_HOOKS) qtest
@@ -33,6 +34,9 @@ ifeq ("$(SANITIZER)","1")
     LDFLAGS += -fsanitize=address
 endif
 
+ifeq ("$(DUMP_SORT)","1")
+	CFLAGS += -DDUMP_SORT
+endif
 $(GIT_HOOKS):
 	@scripts/install-git-hooks
 	@echo
