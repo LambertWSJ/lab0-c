@@ -151,7 +151,7 @@ bool q_delete_mid(struct list_head *head);
  * Reference:
  * https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
  *
- * Return: true for success, false if list is NULL.
+ * Return: true for success, false if list is NULL or empty.
  */
 bool q_delete_dup(struct list_head *head);
 
@@ -207,6 +207,7 @@ void q_sort(struct list_head *head, bool descend);
  *
  * No effect if queue is NULL or empty. If there has only one element, do
  * nothing.
+ * Memory allocated to removed nodes must be freed.
  *
  * Reference:
  * https://leetcode.com/problems/remove-nodes-from-linked-list/
@@ -222,6 +223,7 @@ int q_ascend(struct list_head *head);
  *
  * No effect if queue is NULL or empty. If there has only one element, do
  * nothing.
+ * Memory allocated to removed nodes must be freed.
  *
  * Reference:
  * https://leetcode.com/problems/remove-nodes-from-linked-list/
@@ -239,9 +241,9 @@ int q_descend(struct list_head *head);
  * This function merge the second to the last queues in the chain into the first
  * queue. The queues are guaranteed to be sorted before this function is called.
  * No effect if there is only one queue in the chain. Allocation is disallowed
- * in this function. There is no need to free the 'qcontext_t' and its member
- * 'q' since they will be released externally. However, q_merge() is responsible
- * for making the queues to be NULL-queue, except the first one.
+ * in this function. There is no need to free the 'queue_contex_t' and its
+ * member 'q' since they will be released externally. However, q_merge() is
+ * responsible for making the queues to be NULL-queue, except the first one.
  *
  * Reference:
  * https://leetcode.com/problems/merge-k-sorted-lists/
