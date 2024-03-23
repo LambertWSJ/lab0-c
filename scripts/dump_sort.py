@@ -113,8 +113,8 @@ class DumpDivide(gdb.Command):
                         if str(gdb.parse_and_eval("node_val($list)")) == "0x0":
                             break
                         else:
-                            val = gdb.parse_and_eval("node_val($list)")
-                            div_list.append(val['value'].string())
+                            node = gdb.parse_and_eval("node_val($list)")
+                            div_list.append(node['value'].string())
                             gdb.execute("p $list = $list->next")
                 gdb.execute("p $pend = $pend->prev")
                 sort_lists.append(div_list)
@@ -126,8 +126,8 @@ class DumpDivide(gdb.Command):
                     print("loop end :)")
                     break
                 else:
-                    val = gdb.parse_and_eval("node_val($node)")
-                    div_list.append(val['value'].string())
+                    node = gdb.parse_and_eval("node_val($node)")
+                    div_list.append(node['value'].string())
                     gdb.execute("p $node = $node->next")
             sort_lists.append(div_list)
             div_list = []
@@ -170,9 +170,6 @@ class DumpDivide(gdb.Command):
             except PermissionError:
                 print(f"PermissionError: {self.pan_path}")
                 exit(1)
-
-
-
 
         if self.list_type == 'origin':
             dot_cmd = self.dot_gen_origin(sort_lists[0])
