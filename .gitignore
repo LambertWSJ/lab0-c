@@ -26,3 +26,8 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+
+# clangd
+.clangd
+compile_commands.json
+.cache
