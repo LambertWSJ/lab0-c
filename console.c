@@ -18,6 +18,11 @@
 /* Some global values */
 int simulation = 0;
 int show_entropy = 0;
+int sort_opt = 0;
+int rev_opt = 0;
+int swap_opt = 0;
+int shuffle_opt = 0;
+
 static cmd_element_t *cmd_list = NULL;
 static param_element_t *param_list = NULL;
 static bool block_flag = false;
@@ -447,6 +452,29 @@ void init_cmd()
     add_param("error", &err_limit, "Number of errors until exit", NULL);
     add_param("echo", &echo, "Do/don't echo commands", NULL);
     add_param("entropy", &show_entropy, "Show/Hide Shannon entropy", NULL);
+    add_param("sort_opt", &sort_opt,
+              "chose list sorting algorithm"
+              ", 0 for merge sort(default), other for linux "
+              "kernel list_sort",
+              NULL);
+    add_param("rev_opt", &rev_opt,
+              "chose reverse implemntation"
+              ", 0 for list_move method(default)"
+              ", 1 for bi-direction reverse"
+              ", 2 for recursive reverse(may stack overflow)",
+              NULL);
+
+    add_param("swap_opt", &swap_opt,
+              "chose q_swap implemntation"
+              ", 0 for list_move_tail method(default)"
+              ", other for list_swap method",
+              NULL);
+
+    add_param("shuffle_opt", &shuffle_opt,
+              "chose q_shuffle implemntation"
+              ", 0 original method"
+              ", 1 Modern method",
+              NULL);
 
     init_in();
     init_time(&last_time);

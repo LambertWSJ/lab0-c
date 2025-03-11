@@ -166,9 +166,8 @@ bool q_delete_mid(struct list_head *head)
 /* Delete all nodes that have duplicate string */
 bool q_delete_dup(struct list_head *head)
 {
-    if (!head || list_empty(head)) {
+    if (!head || list_empty(head))
         return false;
-    }
 
     element_t *cur, *next;
     bool dup = false;
@@ -199,13 +198,22 @@ void q_swap(struct list_head *head)
     }
 }
 
+void q_swap_forward_pair(struct list_head *head)
+{
+    struct list_head *node;
+    list_for_each(node, head) {
+        if (node->next == head)
+            break;
+        list_swap(node->next, node);
+    }
+}
+
 /* Reverse elements in queue */
 void q_reverse(struct list_head *head)
 {
     struct list_head *node, *safe;
-    list_for_each_safe(node, safe, head) {
+    list_for_each_safe(node, safe, head)
         list_move(node, head);
-    }
 }
 
 void q_reverse_bidir(struct list_head *head)
@@ -256,7 +264,7 @@ void q_reverseK(struct list_head *head, int k)
         i++;
         if (i == k) {
             list_cut_position(&rev_head, anchor, node);
-            q_reverse(&rev_head);
+            reverse_op(&rev_head);
             list_splice_init(&rev_head, anchor);
             anchor = safe->prev;
             i = 0;
@@ -298,9 +306,9 @@ int q_ascend(struct list_head *head)
     list_for_each_safe(cur, safe, head) {
         sz++;
         element_t *entry = list_entry(cur, element_t, list);
-        if (strcmp(entry->value, maxv) > 0) {
+        if (strcmp(entry->value, maxv) > 0)
             maxv = entry->value;
-        } else {
+        else {
             list_del(cur);
             q_release_element(entry);
             sz--;
@@ -325,9 +333,9 @@ int q_descend(struct list_head *head)
     {
         sz++;
         element_t *entry = list_entry(cur, element_t, list);
-        if (strcmp(entry->value, maxv) > 0) {
+        if (strcmp(entry->value, maxv) > 0)
             maxv = entry->value;
-        } else {
+        else {
             list_del(cur);
             q_release_element(entry);
             sz--;
@@ -358,7 +366,7 @@ int q_merge(struct list_head *head, bool descend)
         last = list_entry(last->chain.prev, queue_contex_t, chain);
     }
 
-    q_sort(&sorted, descend);
+    m_sort(&sorted, descend);
     int size = q_size(&sorted);
     list_splice_init(&sorted, list_first_entry(head, queue_contex_t, chain)->q);
     return size;
@@ -371,4 +379,59 @@ void q_ksort(struct list_head *head, bool descend)
 
     list_cmp_func_t cmp = sort_cmp[descend];
     list_sort(NULL, head, cmp);
+}
+
+void q_shuffle(struct list_head *head)
+{
+    if (list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *node;
+    LIST_HEAD(list);
+
+    for (size_t len = q_size(head); len; len--) {
+        int id = rand() % len;
+        int i = 0;
+        list_for_each(node, head) {
+            if (i == id) {
+                list_move_tail(node, &list);
+                break;
+            }
+            i++;
+        }
+    }
+
+    list_splice_tail(&list, head);
+}
+
+void q_shuffle_remain(struct list_head *head)
+{
+    if (list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *cur, *prev;
+    struct list_head *chosen;
+    LIST_HEAD(list);
+    size_t len = q_size(head);
+
+
+    for (cur = head->prev; len && cur->prev != head; len--) {
+        prev = cur->prev;
+        int id = rand() % len;
+        int i = 0;
+
+        list_for_each(chosen, head) {
+            if (i == id)
+                break;
+            i++;
+        }
+
+        if (chosen == head || chosen == cur)
+            continue;
+        list_swap(cur, chosen);
+
+        if (cur->next == chosen)
+            continue;
+        cur = prev;
+    }
 }
